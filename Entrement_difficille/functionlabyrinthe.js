@@ -181,3 +181,146 @@ function calculateDistance(x, y, persoPosition) {
 
   return { length, lenghtX: lengthX, lenghtY: lengthY };
 }
+
+function mapIsFullPoint(map, pourcent) {
+  let point = 0;
+  for (let i = 0; i < map.length; i++) {
+    for (let j = 0; j < map[i].length; j++) {
+      if (map[i][j] === ".") {
+        point = point + 1;
+      }
+    }
+  }
+  const totalMap = map.length * map[0].length;
+  const pourcentage = (point / totalMap) * 100;
+  console.error(pourcentage);
+  if (pourcentage >= pourcent) {
+    return true;
+  }
+  return false;
+}
+
+function ReupMap(map) {
+  for (let y = 0; y < map.length; y++) {
+    for (let x = 0; x < map[y].length; x++) {
+      if (map[y][x] === ".") {
+        // 1 2 3
+        // 4 5 6
+        // 7 8 9
+        const p1 = map[y - 1]?.[x - 1];
+        const p2 = map[y - 1]?.[x];
+        const p3 = map[y - 1]?.[x + 1];
+        const p4 = map[y][x - 1];
+        const p5 = map[y][x];
+        const p6 = map[y][x + 1];
+        const p7 = map[y + 1]?.[x - 1];
+        const p8 = map[y + 1]?.[x];
+        const p9 = map[y + 1]?.[x + 1];
+
+        //  .#. // ...
+        //  #.#
+        //  ... // .#.
+        if (
+          p4 === "#" &&
+          p6 === "#" &&
+          ((p2 === "#" && p8 === ".") || (p8 === "#" && p2 === "."))
+        ) {
+          changeStringMap(map, "#", x, y);
+        }
+        // .#.
+        // #.. // ..#
+        // .#.
+        // point entouré de # vers la gauche
+        if (
+          ((p4 === "#" && p6 === ".") || (p6 === "#" && p4 === ".")) &&
+          p8 === "#" &&
+          p2 === "#"
+        ) {
+          changeStringMap(map, "#", x, y);
+        }
+        // ##. || #..
+        // #..
+        // #.. || ##.
+        if (
+          (p1 === "#" || p1 === "?") &&
+          p4 === "#" &&
+          p7 === "#" &&
+          p3 === "." &&
+          p6 === "." &&
+          p9 === "." &&
+          ((p2 === "#" && p8 === ".") || (p8 === "#" && p2 === "."))
+        ) {
+          changeStringMap(map, "#", x, y);
+        }
+        // .## // ..#
+        // ..#
+        // ..# // .##
+        if (
+          p3 === "#" &&
+          p6 === "#" &&
+          (p9 === "#" || p9 === "?") &&
+          p1 === "." &&
+          p4 === "." &&
+          p7 === "." &&
+          ((p2 === "#" && p8 === ".") || (p8 === "#" && p2 === "."))
+        ) {
+          changeStringMap(map, "#", x, y);
+        }
+      }
+    }
+  }
+}
+
+function changeStringMap(map, string, x, y) {
+  map[y] = map[y].substring(0, x) + string + map[y].substring(x + 1);
+}
+
+function upDateMap(mapUpdate, map, perso) {
+  // on regarde a 3 cases autour du perso
+  for (let i = 0; i < mapUpdate.length; i++) {
+    const stringAdd = mapUpdate[i][0].substring(perso.x - 3, perso.x + 3);
+    // avant et aprés on découpe
+    const stringAfter = map[mapUpdate[i][1]].substring(0, perso.x - 3);
+    const stringBefore = map[mapUpdate[i][1]].substring(
+      perso.x + 3,
+      map[mapUpdate[i][1]].length
+    );
+    map[mapUpdate[i][1]] = stringAfter + stringAdd + stringBefore;
+  }
+}
+
+// avant asychn
+/* switch (condition) {
+  case "road":
+    mouvementPossible = findBestChemin(map, myPerso, "?", 30);
+    if (mouvementPossible !== false) {
+      console.log(mouvementPossible[0]);
+    } else {
+      mouvementPossible = findBestChemin(map, myPerso, "C", 300);
+      console.log(mouvementPossible[0]);
+      mouvementPossible.splice(0, 1);
+      condition = mouvementPossible.length === 0 ? "Go to T" : "Go to C";
+    }
+    break;
+  case "Go to C":
+    console.log(mouvementPossible[0]);
+    mouvementPossible.splice(0, 1);
+    if (mouvementPossible.length === 0) {
+      condition = "Go to T";
+    }
+    break;
+  case "Go to T":
+    mouvementPossible = findBestChemin(map, myPerso, "T", A + 1);
+    // ici trop de chemin vers T
+    if (mouvementPossible !== false) {
+      console.log(mouvementPossible[0]);
+      mouvementPossible.splice(0, 1);
+      condition = "roadFinal";
+    }
+    break;
+  case "roadFinal":
+    console.log(mouvementPossible[0]);
+    mouvementPossible.splice(0, 1);
+    break;
+}
+} */
