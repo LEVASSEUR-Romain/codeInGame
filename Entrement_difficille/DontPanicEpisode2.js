@@ -90,35 +90,55 @@ function changementRightLeft(direction) {
   }
   return movement.L;
 }
+function chercheById(liste, id) {
+  for (let i = 0; i < liste.length; i++) {
+    if (liste[i].id === id) {
+      return liste[i];
+    }
+  }
+}
+function chercheLecoutLeplusBas(liste) {
+  let min = liste[0];
+  for (let i = 0; i < liste.length; i++) {
+    if (liste[i].coutTotal < min.coutTotal) {
+      min = liste[i];
+    }
+  }
+  return min;
+}
 
 function findBestChemin(p, d) {
-  //nb de clones que l'on a
-  let listeMouvement = {};
   let position = p;
   let niveau = -1;
   let id = 0;
   let direction = d;
   let openList = [];
   let closeList = [];
-  let coutChangementDirection = 3;
+  let coutChangementDirection = 2;
   let coutElevator = 3;
-  let nbClonesBlockOrElevator = nbTotalClones - 1;
+  let elevatorPlus =
+    nbAdditionalElevators + (nbFloors - Object.keys(ObjetElevator).length);
   openList.push({
     id: id,
     niveau: niveau,
     cout: 0,
-    coutTotal: 1,
+    coutTotal: 0,
     direction: direction,
     position: position,
     parent: 0,
+    elevator: elevatorPlus,
   });
   id++;
   while (openList.length > 0) {
-    const currentNode = openList[0];
-    //console.error(openList[0]);
+    const currentNode = chercheLecoutLeplusBas(openList);
+    let testElevator = currentNode.elevator > 1 ? true : false;
+    console.error(currentNode);
     niveau = currentNode.niveau === -1 ? 0 : currentNode.niveau + 1;
-    if (ObjetElevator[niveau] === undefined) {
-      console.error("erreur", niveau);
+    if (ObjetElevator[niveau] === undefined || testElevator) {
+      if (testElevator) {
+        currentNode.elevator--;
+        testElevator = false;
+      }
       addObjetElevator(niveau, position);
       openList.push({
         id: id,
@@ -129,27 +149,32 @@ function findBestChemin(p, d) {
         position: currentNode.position,
         action: log.e,
         parent: currentNode.id,
+        elevator: currentNode.elevator,
       });
       id++;
     } else {
       for (let i = 0; i < ObjetElevator[niveau].length; i++) {
         let changementDirection = false;
         let surcout = 0;
+        let surcoutTotal = 0;
         if (
           currentNode.direction === movement.L &&
           currentNode.position < ObjetElevator[niveau][i]
         ) {
           changementDirection = true;
-          surcout = coutChangementDirection;
+          surcout += coutChangementDirection;
         } else if (
           currentNode.direction === movement.R &&
           currentNode.position > ObjetElevator[niveau][i]
         ) {
           changementDirection = true;
-          surcout = coutChangementDirection;
+          surcout += coutChangementDirection;
         }
-        // 1 a payer pour monter un étage
+        // 1 a payer pour monter un étages
         surcout += 1;
+        if (changementDirection) {
+          surcoutTotal = 1;
+        }
 
         openList.push({
           id: id,
@@ -158,20 +183,26 @@ function findBestChemin(p, d) {
             Math.abs(ObjetElevator[niveau][i] - currentNode.position) + surcout,
           coutTotal:
             Math.abs(ObjetElevator[niveau][i] - currentNode.position) +
+            surcout +
             currentNode.coutTotal +
-            surcout,
+            surcoutTotal,
           direction: changementDirection
             ? changementRightLeft(currentNode.direction)
             : currentNode.direction,
           action: changementDirection ? log.b : log.w,
           position: ObjetElevator[niveau][i],
           parent: currentNode.id,
+          elevator: currentNode.elevator,
         });
         id++;
       }
     }
-
-    if (niveau >= exitFloor) {
+    closeList.push({ ...currentNode });
+    openList.shift();
+    if (niveau >= exitFloor + 1) {
+      break;
+    }
+    /*     if (niveau >= exitFloor + 1) {
       //console.error("pushopenlist", ...openList);
       for (let i = 0; i < openList.length; i++) {
         closeList.push({ ...openList[i] });
@@ -180,19 +211,20 @@ function findBestChemin(p, d) {
     } else {
       closeList.push({ ...currentNode });
       openList.shift();
-    }
+    } */
   }
 
   const petitClose = plusPetitDeLaCloseListe(closeList);
+  //const petitClose = chercheById(closeList, 159);
   let listAfaire = [];
-  console.error(closeList);
-  //console.error(petitClose, "petitClose");
   // Si max rounds égal au chemin le plus petit
-  if (petitClose.coutTotal <= nbRounds) {
+  if (petitClose.coutTotal <= nbRounds + 10) {
+    //if (true) {
     listAfaire = listAfaire.concat(actionExecute(petitClose));
     let id = petitClose.parent;
     for (let i = closeList.length - 1; i > -1; i--) {
       if (closeList[i].id === id && id != 0) {
+        console.error(closeList[i]);
         listAfaire = actionExecute(closeList[i]).concat(listAfaire);
         id = closeList[i].parent;
       }
@@ -271,9 +303,9 @@ while (true) {
   const cloneFloor = parseInt(inputs[0]); // floor of the leading clone
   const clonePos = parseInt(inputs[1]); // position of the leading clone on its floor
   const direction = inputs[2]; // direction of the leading clone: LEFT or RIGHT
-  console.error(ObjetElevator, "elevator");
+  console.error(nbAdditionalElevators, "elevator");
   //console.error(blocker, "position final");
-  //console.error("clonePos", clonePos);
+  console.error("clonePos", clonePos);
   //console.error("extiPos", exitPos);
   //console.error(cloneFloor, "cloneFloor");
   //console.error(changementPosition(clonePos, direction));

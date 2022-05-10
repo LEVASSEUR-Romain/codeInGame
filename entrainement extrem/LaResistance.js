@@ -36,22 +36,37 @@ function traductionEnMorse(mot) {
   return traductionEnCours;
 }
 
-function recursiveRecherchelaSuite(str, mot, index, score) {
+function recursiveRecherchelaSuite(str, mot, index) {
   if (index === str.length) {
     return 1;
   }
+  let score = 0;
   for (let i = index; i < str.length + 1; i++) {
     const findIndex = mot[str.substring(index, i)];
     if (findIndex !== undefined) {
-      score = findIndex * recursiveRecherchelaSuite(str, mot, i, 1);
+      score += findIndex * recursiveRecherchelaSuite(str, mot, i);
     }
   }
 
   return score;
 }
 
+/* function solve(start, str, dp) {
+  if (start === str.length) return 1;
+
+  if (dp[start] !== undefined) return dp[start];
+
+  var res = 0;
+  for (var i = 1; i <= 80 && start + i <= str.length; i++) {
+    var n = words[str.substr(start, i)];
+    if (n !== undefined) res += n * solve(start + i, str, dp);
+  }
+  return (dp[start] = res);
+} */
+
 const dicoMorseIndex = {};
 const codeMorse = readline();
+console.error(codeMorse.length, "taille");
 const tailleMorse = codeMorse.length;
 const N = parseInt(readline());
 for (let i = 0; i < N; i++) {
@@ -96,6 +111,7 @@ while (motCrypter.length != 0) {
 }
 
 //additionner tous les scores
+console.error(saveScore);
 const final = Object.values(saveScore).reduce((a, b) => a * b);
 
 console.log(final);
